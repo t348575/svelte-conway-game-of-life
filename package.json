@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "autoprefixer": "^9",
+        "just-throttle": "^2.3.0",
         "postcss": "^7",
         "sirv-cli": "^1.0.0",
         "tailwindcss": "npm:@tailwindcss/postcss7-compat"

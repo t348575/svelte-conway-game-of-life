@@ -1,12 +1,15 @@
 <script lang="ts">
+    import { pannable } from './pannable.js';
+
     let modal = false;
-    let gameInterval = 100;
+    let gameInterval = 10;
     type Cell = 'empty' | 'alive';
     let optionIcon = 'fa-play';
     let grid: Cell[][] = [];
     let gridTotal = grid;
     let playInterval: number;
     let gridSize: { x: number; y: number };
+
     init();
 
     function init() {
@@ -21,6 +24,11 @@
                 5
         };
         grid = [...Array(gridSize.y)].map(() => [...Array(gridSize.x)].map(() => 'empty'));
+        update();
+    }
+
+    function click(i: number, j: number) {
+        grid[i][j] = grid[i][j] === 'alive' ? 'empty' : 'alive';
         update();
     }
 
@@ -57,6 +65,7 @@
         }
         update();
     }
+
     function getNeighbours(i: number, j: number): number {
         let count = 0;
         if (i + 1 < gridSize.y && grid[i + 1][j] === 'alive') {
@@ -85,21 +94,51 @@
         }
         return count;
     }
+
+    function genRandom() {
+        clearInterval(playInterval);
+        init();
+        const numCells = gridSize.x * gridSize.y;
+        const maxNum = getRandom(Math.floor(numCells * 0.01), Math.floor(numCells * 0.1));
+        const setLocations = new Set<string>();
+        for (let i = 0; i < maxNum; i++) {
+            while(true) {
+                const item = {
+                    x: getRandom(0, gridSize.x - 1),
+                    y: getRandom(0, gridSize.y - 1)
+                };
+                if (!setLocations.has(`${item.x}${item.y}`)) {
+                    setLocations.add(`${item.x}${item.y}`);
+                    grid[item.y][item.x] = 'alive';
+                    break;
+                }
+            }
+        }
+        update();
+    }
+
+    function getRandom(min: number, max: number): number {
+        return Math.floor((Math.random() * max) + min);
+    }
+
+    function handleMove(event: { detail: { x: number, y: number, dx: number, dy: number } }) {
+        click(Math.floor(event.detail.y / 20), Math.floor(event.detail.x / 20));
+    }
+
 </script>
 
 <main class="w-screen h-screen font-sans">
-    <div class="center">
+    <div class="center"
+         use:pannable
+         on:panmove={handleMove}
+    >
         <div>
             {#each gridTotal as row, i}
                 <div class="row">
-                    {#each row as cell, k}
+                    {#each row as cell, j}
                         <div
-                            on:click={() => {
-                                grid[i][k] = grid[i][k] === 'alive' ? 'empty' : 'alive';
-                                update();
-                            }}
-                            class={`square ${cell}`}
-                        />
+                            on:click={() => click(i, j)}
+                            class={`square ${cell}`}></div>
                     {/each}
                 </div>
             {/each}
@@ -108,7 +147,7 @@
     {#if modal}
         <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" />
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
                 <span class="hidden inline-block align-middle h-screen" aria-hidden="true">&#8203;</span>
                 <div
                     class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all my-8 align-middle max-w-7xl w-full"
@@ -161,16 +200,22 @@
         </div>
     {/if}
     <button
-        class="absolute bottom-3 right-3 py-2 px-4 bg-indigo-800 w-11 h-11 hover:bg-indigo-900 font-bold rounded-full"
+        class="absolute bottom-2 right-2 bg-indigo-800 w-11 h-11 hover:bg-indigo-900 font-bold rounded-full"
         on:click={handleModal}
     >
-        <i class={`fas ${optionIcon} text-white`} />
+        <i class={`fas ${optionIcon} text-white`}></i>
     </button>
     <button
-        class="absolute bottom-16 right-3 py-2 px-4 bg-indigo-800 w-11 h-11 hover:bg-indigo-900 font-bold rounded-full"
+        class="absolute bottom-16 right-2 bg-indigo-800 w-11 h-11 hover:bg-indigo-900 font-bold rounded-full"
         on:click={init}
     >
-        <i class="fas fa-redo-alt text-white" />
+        <i class="fas fa-redo-alt text-white"></i>
+    </button>
+    <button
+        class="absolute bottom-2 right-16 bg-indigo-800 w-11 h-11 hover:bg-indigo-900 font-bold rounded-full"
+        on:click={genRandom}
+    >
+        <i class="fas fa-random text-white"></i>
     </button>
 </main>
 
